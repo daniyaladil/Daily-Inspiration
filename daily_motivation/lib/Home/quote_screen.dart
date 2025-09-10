@@ -38,22 +38,24 @@ class _QuoteScreenState extends State<QuoteScreen> {
   void _loadFavorites() {
     final stored = favoritesBox.get('favorites', defaultValue: []);
     favorites = List<Map<String, String>>.from(
-        (stored as List).map((item) => Map<String, String>.from(item))
-    );
+        (stored as List).map((item) => Map<String, String>.from(item)));
     setState(() {});
   }
 
   void _isFavToggle(String quote, String author) {
     setState(() {
-      final exists = favorites.any((fav) =>
-      fav["quote"] == quote &&
-          fav["author"] == author);
+      final exists = favorites.any(
+        (fav) => fav["quote"] == quote && fav["author"] == author,
+      );
 
       if (exists) {
         _removeFavorite(quote, author);
+        isFavorite = false;
       } else {
         _addFavorite(quote, author);
+        isFavorite = true;
       }
+
       _saveToHive();
     });
   }
@@ -67,9 +69,8 @@ class _QuoteScreenState extends State<QuoteScreen> {
   }
 
   void _removeFavorite(String quote, String author) {
-    favorites.removeWhere((fav) =>
-    fav["quote"] == quote &&
-        fav["author"] == author);
+    favorites
+        .removeWhere((fav) => fav["quote"] == quote && fav["author"] == author);
     print("Removed: $quote");
   }
 
@@ -83,7 +84,6 @@ class _QuoteScreenState extends State<QuoteScreen> {
     Share.share(text, subject: "Inspiration for you");
   }
 
-
   Future<void> getRandomQuote() async {
     setState(() => isLoading = true);
 
@@ -93,20 +93,30 @@ class _QuoteScreenState extends State<QuoteScreen> {
       var data = jsonDecode(response.body.toString());
 
       if (response.statusCode == 200) {
+        final newQuote = data[0]["q"].toString();
+        final newAuthor = data[0]["a"].toString();
+
         setState(() {
-          quote = data[0]["q"].toString();
-          author = data[0]["a"].toString();
+          quote = newQuote;
+          author = newAuthor;
           isLoading = false;
+
+          // check if this quote is already in favorites
+          isFavorite = favorites.any(
+            (fav) => fav["quote"] == newQuote && fav["author"] == newAuthor,
+          );
         });
       }
     } catch (e) {
       setState(() {
-        quote = "⚠️ Failed to fetch quote. Try again!";
+        quote = " Failed to fetch quote. Try again!";
         author = "";
         isLoading = false;
+        isFavorite = false;
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.themeMode == ThemeMode.dark;
@@ -129,7 +139,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
           // Content
           Center(
             child: isLoading
-                ?  CircularProgressIndicator()
+                ? CircularProgressIndicator()
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -202,17 +212,17 @@ class _QuoteScreenState extends State<QuoteScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-
                                     GestureDetector(
                                       onTap: () {
-                                        _isFavToggle(quote!,author!);
+                                        _isFavToggle(quote!, author!);
                                       },
                                       child: Icon(
-                                        isFavorite?
-                                        Icons.favorite:
-                                        Icons.favorite_border,
-                                        color:
-                                            isDark ? Colors.white : Colors.black,
+                                        isFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     ),
                                     SizedBox(
@@ -224,8 +234,9 @@ class _QuoteScreenState extends State<QuoteScreen> {
                                       },
                                       child: Icon(
                                         Icons.share,
-                                        color:
-                                            isDark ? Colors.white : Colors.black,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
                                       ),
                                     )
                                   ],
