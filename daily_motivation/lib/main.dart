@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  // Open a box for favorites
+  // Open a box for   favorites
   await Hive.openBox('favoritesBox');
   runApp(const MyApp());
 }
